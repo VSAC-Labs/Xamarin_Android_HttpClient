@@ -65,7 +65,7 @@ namespace XamarinHttpClient
                 if (Uri.IsWellFormedUriString(URL, UriKind.Absolute))
                 {
                     httpClient = new HttpClient();
-                    httpClient.DefaultRequestHeaders.Add("Bearer", "5492a5ebcdbc9388f772429885e6840cd756383e");
+                    httpClient.DefaultRequestHeaders.Add("Bearer", "");
                     //httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "5492a5ebcdbc9388f772429885e6840cd756383e");
                     var result = httpClient.GetAsync(URL);
                     TextViewResults.Text = result.Result.Content.ToString();
