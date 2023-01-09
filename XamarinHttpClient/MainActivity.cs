@@ -14,15 +14,29 @@ using Android.Widget;
 using System.Net.Http;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Net;
+using Android.Content;
 
 namespace XamarinHttpClient
 {
+#if DEBUG
+    //[Application(Debuggable = true, NetworkSecurityConfig = "@xml/network_security_config")]
+#else
+    [Application(Debuggable = false)]
+#endif
+
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
-        Button btnWebSearch;
+        string AppCenterAnalyticsKey = "2f5f11e2-a59a-4a5b-974f-b77278ea8516";
+        Button btnHttpClientApiTester;
+        bool Usefiddler = true;
+        string FiddlerUri = $"http://127.0.0.1:8888";
+        Button btnSumbitAPICall;
         EditText editTextURLEndpoint;
-        TextView TextViewResults;
+        TextView textViewApiToken;
+        TextView textViewResults;
+        RadioButton radioButtonUseProxy;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -39,44 +53,106 @@ namespace XamarinHttpClient
             fab.Click += FabOnClick;
 
             //Setup Controls
-            btnWebSearch = FindViewById<Button>(Resource.Id.button1);
-            editTextURLEndpoint = FindViewById<EditText>(Resource.Id.editText1); ;
-            TextViewResults = FindViewById<TextView>(Resource.Id.textView4);
+            /*            btnSumbitAPICall = FindViewById<Button>(Resource.Id.btnSubmitApiCall);
+                        editTextURLEndpoint = FindViewById<EditText>(Resource.Id.editTextAPIEndpointInput);
+                        textViewApiToken = FindViewById<TextView>(Resource.Id.textViewtextViewAppCenterApiKeyInput);
+                        textViewResults = FindViewById<TextView>(Resource.Id.textViewResults);
+                        radioButtonUseProxy = FindViewById<RadioButton>(Resource.Id.radioButtonUseProxy);
+                        btnSumbitAPICall.Click+= btnSumbitAPICall_Click;*/
 
-            btnWebSearch.Click+= btnWebSearch_Click;
+            btnHttpClientApiTester = FindViewById<Button>(Resource.Id.buttonHttpClientApiTester);
+
+            btnHttpClientApiTester.Click += BtnHttpClientApiTester_Click;
+        }
+
+        private void BtnHttpClientApiTester_Click(object sender, EventArgs e)
+        {
+            var intent = new Intent(this, typeof(APITester));
+            intent.PutExtra("HelloWorld", DateTime.Now.ToLongTimeString());  
+            this.StartActivity(intent);
         }
 
         private void AppCenterSetup()
         {
             AppCenter.LogLevel = LogLevel.Verbose;
-            AppCenter.Start("", typeof(Crashes), typeof(Analytics));
+            AppCenter.Start(AppCenterAnalyticsKey, typeof(Crashes), typeof(Analytics));
             Analytics.TrackEvent("Startup Succeeded");
         }
 
-        private void btnWebSearch_Click(object sender, EventArgs e)
+        private void btnSumbitAPICall_Click(object sender, EventArgs e)
         {
-            Analytics.TrackEvent($"WebSearch Started: {editTextURLEndpoint.Text}");
+            bool bContinue = true;
+
+            Analytics.TrackEvent($"btnSumbitAPICall Started: {editTextURLEndpoint.Text}  at {DateTime.Now.ToLongTimeString()}");
+            string URL = editTextURLEndpoint.Text;
+            string TOKEN = textViewApiToken.Text;
+            string results = "";
             HttpClient httpClient;
-            Analytics.TrackEvent($"btnWebSearch_Click at {DateTime.Now.ToLongTimeString()}");
+            WebProxy proxy;
+            HttpClientHandler httpClientHandler;
 
             try
             {
-                string URL = editTextURLEndpoint.Text;
-                if (Uri.IsWellFormedUriString(URL, UriKind.Absolute))
+                if (TOKEN.Length <= 0 || URL.Length <= 0)
                 {
-                    httpClient = new HttpClient();
-                    httpClient.DefaultRequestHeaders.Add("Bearer", "");
-                    var result = httpClient.GetAsync(URL);
-                    TextViewResults.Text = result.Result.Content.ToString();
-                    btnWebSearch.Text += $": Status Code = {result.Result.StatusCode}";
+                    bContinue = false;
                 }
+
+                if (bContinue)
+                {
+                    if (Uri.IsWellFormedUriString(URL, UriKind.Absolute))
+                    {
+                        if (radioButtonUseProxy.Checked)
+                        {
+                            proxy = new WebProxy
+                            {
+                                Address = new Uri(FiddlerUri),
+                                BypassProxyOnLocal = false,
+                                UseDefaultCredentials = false,
+                            };
+
+                            httpClientHandler = new HttpClientHandler
+                            {
+                                Proxy = proxy,
+                            };
+
+                            // Disable SSL verification
+                            httpClientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+                            httpClient = new HttpClient(httpClientHandler, true);
+                        }
+                        else
+                        {
+                            httpClient = new HttpClient();
+                        }
+
+                        //httpClient.DefaultRequestHeaders.Add("Bearer", TOKEN);
+                        httpClient.DefaultRequestHeaders.Add("X-API-Token", TOKEN);
+                        var result = httpClient.GetAsync(URL);
+                        btnSumbitAPICall.Text += $": Status Code = {result.Result.StatusCode}";
+                        results = result.Result.Content.ToString();
+                    }
+                    else
+                    {
+                        bContinue = false;
+                    }
+                }
+
+                if (bContinue)
+                {
+
+                }
+
             }
             catch (Exception ex)
             {
+                bContinue = false;
                 Crashes.TrackError(ex);
                 Analytics.TrackEvent($"btnWebSearch_Click threw error {DateTime.Now.ToLongTimeString()}");
-                TextViewResults.Text += ex.Message;
+                results += ex.Message;
             }
+
+            textViewResults.Text = results;
 
         }
 
