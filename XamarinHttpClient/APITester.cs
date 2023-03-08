@@ -27,8 +27,9 @@ namespace XamarinHttpClient
         EditText textViewUseProxyUrl;
         
         TextView textViewResults;
-        
-        RadioButton radioButtonUseProxy;
+
+        CheckBox CheckBoxUseProxy;
+        //RadioButton radioButtonUseProxy;
 
 
         string dataPassedIntoThisClass;
@@ -55,14 +56,13 @@ namespace XamarinHttpClient
             textViewApiToken = FindViewById<EditText>(Resource.Id.editTextApiKey);
             textViewResults = FindViewById<TextView>(Resource.Id.textViewApiResults);
             textViewUseProxyUrl = FindViewById<EditText>(Resource.Id.editTextProxyUrl);
-            radioButtonUseProxy = FindViewById<RadioButton>(Resource.Id.radioButtonUseProxy);
+            CheckBoxUseProxy = FindViewById<CheckBox>(Resource.Id.checkBoxUseProxy);
             btnSumbitAPICall.Click += btnSumbitAPICall_Click;
         }
 
         private void btnSumbitAPICall_Click(object sender, EventArgs e)
         {
             bool bContinue = true;
-
             Analytics.TrackEvent($"btnSumbitAPICall Started: {textViewURLEndpoint.Text}  at {DateTime.Now.ToLongTimeString()}");
             string URL = textViewURLEndpoint.Text;
             string TOKEN = textViewApiToken.Text;
@@ -82,7 +82,7 @@ namespace XamarinHttpClient
                 {
                     if (Uri.IsWellFormedUriString(URL, UriKind.Absolute))
                     {
-                        if (radioButtonUseProxy.Checked)
+                        if (CheckBoxUseProxy.Checked)
                         {
                             proxy = new WebProxy
                             {

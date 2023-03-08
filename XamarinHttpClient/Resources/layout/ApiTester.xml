@@ -4,15 +4,13 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-
-
-    <RadioButton
+    
+        <CheckBox
+        android:clickable="true" 
         android:text="Use Proxy"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/radioButtonUseProxy"
-        android:clickable="true" />
+        android:id="@+id/checkBoxUseProxy" />
 
     <EditText
         android:text="http://127.0.0.1:8888"
